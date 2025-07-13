@@ -1,0 +1,38 @@
+# If the value "global" is set to true, the entries in "worlds" do not apply.
+# If you only want to use real-time for certain worlds,
+# set "global" to false and complete the string list at "worlds" with the world names.
+#
+# ATTENTION ! Pay attention to the formal criteria so that mistakes do not occur.
+#
+#
+# PS: If you want to reload the standard configuration, simply delete the config.yml file and reload the server.
+# A new config.yml file is created with the standard settings.
+#
+# Please reload or restart your server on every config save after changing.
+#
+# Put your time zone value in official format like (E.g. UTC, CEST, PST, GMT+1, GMT-8, etc.).
+# If you are continuously interested in auto updates, set "auto_update" to true.
+#
+#
+enable: true
+auto_update: false
+timezone: "UTC"
+
+global: true
+worlds:
+  - world1
+  - world2
+  - world3
+  - ...
+
+#You can here modify the perms for all commands which you like.
+#The permission for "admin" allows the player to get update notifications and constructed tab completion on main command.
+Permissions:
+  admin: "mcrealtime.use"
+
+  info: "mcrealtime.use"
+  contact: "mcrealtime.use"
+  uninstall: "mcrealtime.use"
+  changelog: "mcrealtime.use"
+  update: "mcrealtime.use"
+  reload: "mcrealtime.reload" #Command is not in use. Just for error prevention.

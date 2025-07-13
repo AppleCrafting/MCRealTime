@@ -1,0 +1,11 @@
+name: MCRealTime
+version: '${project.version}'
+main: ing.applecraft.mcrealtime.MCRealTime
+prefix: MCRealTime
+authors: [Gabriel M.]
+description: Real time synchronization with game time.
+website: https://www.applecraft.ing
+
+commands:
+  mcrealtime:
+    description: Main command. Type it to find out more.
