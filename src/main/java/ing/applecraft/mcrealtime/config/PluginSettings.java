@@ -47,7 +47,7 @@ public final class PluginSettings {
         this.zoneId = zoneId;
         this.solarLocation = solarLocation;
         this.global = global;
-        this.worlds = Collections.unmodifiableSet(new LinkedHashSet<String>(worlds));
+        this.worlds = Collections.unmodifiableSet(new LinkedHashSet<>(worlds));
         this.synchronizationIntervalTicks = synchronizationIntervalTicks;
         this.preventSleep = preventSleep;
         this.disableInsomnia = disableInsomnia;

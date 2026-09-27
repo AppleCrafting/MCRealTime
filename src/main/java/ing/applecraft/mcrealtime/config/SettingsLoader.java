@@ -97,7 +97,7 @@ public final class SettingsLoader {
     }
 
     private Set<String> sanitizeWorlds(List<String> configuredWorlds) {
-        Set<String> worlds = new LinkedHashSet<String>();
+        Set<String> worlds = new LinkedHashSet<>();
         for (String world : configuredWorlds) {
             if (world == null) {
                 continue;

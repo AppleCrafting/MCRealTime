@@ -67,7 +67,7 @@ public final class MCRealTimeCommand implements CommandExecutor, TabCompleter {
             return Collections.emptyList();
         }
 
-        List<String> candidates = new ArrayList<String>();
+        List<String> candidates = new ArrayList<>();
         if (sender.hasPermission(USE_PERMISSION)) {
             candidates.add("status");
         }
@@ -75,7 +75,7 @@ public final class MCRealTimeCommand implements CommandExecutor, TabCompleter {
             candidates.add("reload");
         }
 
-        List<String> completions = new ArrayList<String>();
+        List<String> completions = new ArrayList<>();
         StringUtil.copyPartialMatches(args[0], candidates, completions);
         Collections.sort(completions);
         return completions;

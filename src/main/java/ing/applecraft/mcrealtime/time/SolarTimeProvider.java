@@ -15,7 +15,7 @@ import java.util.Objects;
  * Astronomical mode:
  * sunrise -> 0, solar noon -> 6000, sunset -> 12000,
  * and the night is interpolated to the next sunrise.
- *
+ * <p>
  * Polar days/nights have no sunrise/sunset pair. For those dates this provider
  * deliberately falls back to classic clock mapping until a dedicated polar
  * sky model is introduced.
