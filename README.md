@@ -160,7 +160,7 @@ The resulting plugin JAR is placed in `target/`.
 
 - classic clock mapping at midnight, sunrise, noon and sunset;
 - minute/second precision that catches the old integer-division bug;
-- Oldenburg solar times near the 2026 summer and winter solstices;
+- Your city's solar times near the 2026 summer and winter solstices;
 - canonical solar-event-to-Minecraft-tick mapping;
 - seasonal day-length behavior;
 - polar day/night detection.
