@@ -1,11 +1,21 @@
 name: MCRealTime
 version: '${project.version}'
-main: ing.applecraft.mcrealtime.MCRealTime
+main: ing.applecraft.mcrealtime.MCRealTimePlugin
 prefix: MCRealTime
 authors: [Gabriel M.]
-description: Real time synchronization with game time.
-website: https://www.applecraft.ing
+description: Synchronizes Minecraft world time with civil or astronomical real time.
+website: https://github.com/AppleCrafting/MCRealTime
 
 commands:
   mcrealtime:
-    description: Main command. Type it to find out more.
+    description: Shows MCRealTime status and administration commands.
+    usage: /<command> [status|reload]
+    aliases: [mcrt]
+
+permissions:
+  mcrealtime.use:
+    description: Allows access to MCRealTime status information.
+    default: true
+  mcrealtime.admin:
+    description: Allows administrative MCRealTime commands.
+    default: op

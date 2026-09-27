@@ -1,38 +1,36 @@
-# If the value "global" is set to true, the entries in "worlds" do not apply.
-# If you only want to use real-time for certain worlds,
-# set "global" to false and complete the string list at "worlds" with the world names.
+# MCRealTime 5 configuration
 #
-# ATTENTION ! Pay attention to the formal criteria so that mistakes do not occur.
+# CLOCK: maps the configured civil clock directly to the Minecraft 24,000-tick day.
+# SOLAR: maps local sunrise -> tick 0, solar noon -> 6000 and sunset -> 12000.
 #
-#
-# PS: If you want to reload the standard configuration, simply delete the config.yml file and reload the server.
-# A new config.yml file is created with the standard settings.
-#
-# Please reload or restart your server on every config save after changing.
-#
-# Put your time zone value in official format like (E.g. UTC, CEST, PST, GMT+1, GMT-8, etc.).
-# If you are continuously interested in auto updates, set "auto_update" to true.
-#
-#
-enable: true
-auto_update: false
+# The timezone is still required in SOLAR mode to determine the local calendar date.
+# Sunrise/sunset themselves are calculated from latitude and longitude.
+
+config-version: 5
+enabled: true
+mode: CLOCK
+
 timezone: "UTC"
 
+solar:
+  # Example coordinates only. Change them before enabling SOLAR mode.
+  latitude: 0.0
+  longitude: 0.0
+
+# If global is true, all loaded worlds are synchronized.
+# Otherwise, only the named worlds are affected.
 global: true
 worlds:
-  - world1
-  - world2
-  - world3
-  - ...
+  - world
 
-#You can here modify the perms for all commands which you like.
-#The permission for "admin" allows the player to get update notifications and constructed tab completion on main command.
-Permissions:
-  admin: "mcrealtime.use"
+synchronization:
+  # 20 ticks = approximately one second on a healthy server.
+  interval-ticks: 20
 
-  info: "mcrealtime.use"
-  contact: "mcrealtime.use"
-  uninstall: "mcrealtime.use"
-  changelog: "mcrealtime.use"
-  update: "mcrealtime.use"
-  reload: "mcrealtime.reload" #Command is not in use. Just for error prevention.
+behavior:
+  # Prevent vanilla sleeping from briefly skipping the night before MCRealTime corrects it.
+  prevent-sleep: true
+
+  # When available on the server version, disable the insomnia gamerule while
+  # MCRealTime controls a world. The previous value is restored afterwards.
+  disable-insomnia: true

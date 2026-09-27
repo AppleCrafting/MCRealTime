@@ -1,91 +1,175 @@
+# MCRealTime 5
 
+MCRealTime synchronizes the Minecraft day/night cycle with real-world time.
+Version 5 is a clean rewrite of the original plugin with two independent time models:
 
-    I wanted to ask you to share your ideas in the comments or under "Relations -> Issues" on how to upgrade MCRealTime, because the basic concept is almost complete.
+- **CLOCK** — the original idea: civil wall-clock time maps linearly to the 24,000-tick Minecraft day.
+- **SOLAR** — astronomical mode: local sunrise maps to tick `0`, solar noon to `6000`, sunset to `12000`, and the night is interpolated until the next sunrise.
 
+## Design goals
 
+1. Keep the Minecraft-facing API surface deliberately small.
+2. Compile the plugin to **Java 8 bytecode** for broad legacy-server compatibility.
+3. Avoid NMS/CraftBukkit internals and Paper-only APIs in the universal build.
+4. Keep astronomical and time calculations independent from Bukkit so they can be tested without a Minecraft server.
+5. Restore world state changed by the plugin instead of assuming the administrator's previous gamerule values.
 
-Dear community,
+## Project structure
 
+```text
+src/main/java/ing/applecraft/mcrealtime
+├── MCRealTimePlugin.java       Bukkit lifecycle only
+├── PluginRuntime.java          one validated runtime configuration
+├── astronomy/
+│   ├── GeoLocation.java
+│   ├── SolarCalculator.java
+│   └── SolarDay.java
+├── config/
+│   ├── PluginSettings.java
+│   └── SettingsLoader.java
+├── time/
+│   ├── TimeProvider.java
+│   ├── TimeProviderFactory.java
+│   ├── ClockTimeProvider.java
+│   ├── SolarTimeProvider.java
+│   └── TimeMode.java
+├── world/
+│   ├── TimeSynchronizer.java
+│   ├── WorldSelector.java
+│   └── WorldStateManager.java
+├── listener/
+│   ├── SleepListener.java
+│   └── WorldUnloadListener.java
+└── command/
+    └── MCRealTimeCommand.java
+```
 
+The dependency direction is intentional:
 
-I have once again brought out a plugin + Updater, which allows the real-time in Minecraft. That means, if e.g. 8pm, it's the same night in Minecraft, the other way around. This plugin works according to the RTC system and synchronize with the time zone you type in the config. The plugin gets the time information from the RTC and transfers that live to Minecraft.
+```text
+Bukkit/Paper server
+      |
+      v
+MCRealTimePlugin -> PluginRuntime -> TimeProvider
+                                  /             \
+                         ClockTimeProvider   SolarTimeProvider
+                                                   |
+                                                   v
+                                             SolarCalculator
+```
 
+`SolarCalculator`, `SolarDay`, `GeoLocation`, and both time providers contain no Bukkit dependency.
 
+## Configuration
 
-You do not have to do much to get the plugin working. Just put the plugin in the normal plugins' folder. This also applies to the users who use BungeeCord!
+```yaml
+enabled: true
+mode: CLOCK
 
+timezone: "Europe/Berlin"
 
+solar:
+  latitude: 53.1435
+  longitude: 8.2146
 
+global: true
+worlds:
+  - world
 
+synchronization:
+  interval-ticks: 20
 
-You can activate and deactivate the plugin in the config.yml file by setting the value "enable" to true or false accordingly. You can also set the effect of the plugin globally or set it to a specific world by setting the variable "global" to false and adding multi world names in "worlds". Now set up your time zone and let's run! If you're continuing to interest in auto update, set that value to true. And if you didn't know, you can modify the permission values you like in the config file.
+behavior:
+  prevent-sleep: true
+  disable-insomnia: true
+```
 
+### CLOCK mode
 
+The mapping is linear across a real 24-hour day:
 
+| Civil time | Minecraft tick |
+|---|---:|
+| 00:00 | 18000 |
+| 06:00 | 0 |
+| 12:00 | 6000 |
+| 18:00 | 12000 |
 
+Unlike MCRealTime 4.x, minutes and seconds are calculated with floating-point arithmetic instead of integer division.
 
-Here are maybe important commands:
+### SOLAR mode
 
+The configured coordinates determine the astronomical day:
 
+| Astronomical event | Minecraft tick |
+|---|---:|
+| sunrise | 0 |
+| solar noon | 6000 |
+| sunset | 12000 |
+| next sunrise | 24000 / 0 |
 
-    "/mcrealtime info" - You will get news and status about this plugin.
-    "/mcrealtime contact" - You will get information about my contact details, if you have a problem or if you will send a feedback for my plugin.
-    "/mcrealtime changelog" - You will get information about the last update.
-    "/mcrealtime uninstall" - You will get a manual, how to prepare an uninstall of the plugin. IMPORTANT !
-    "/mcrealtime update" - If an update avaible, you will auto update MCRealTime with that command.
+This means that summer days are genuinely longer than winter days in real elapsed time.
+The timezone is still used to decide which local calendar date belongs to an instant; the sunrise/sunset calculation itself uses latitude and longitude.
 
+The implementation uses the NOAA/Meeus solar equations and a 90.833° apparent sunrise/sunset zenith.
 
+### Polar regions
 
-Permission:
+During polar day or polar night there is no ordinary sunrise/sunset pair. The current implementation intentionally falls back to CLOCK mapping for those dates. A dedicated polar-sky model can be added later without changing the Bukkit layer.
 
-    "/mcrealtime info" - mcrealtime.use (default)
-    "/mcrealtime contact" - mcrealtime.use (default)
-    "/mcrealtime changelog" - mcrealtime.use (default)
-    "/mcrealtime uninstall" - mcrealtime.use (default)
-    "/mcrealtime update" - mcrealtime.use (default)
-    Command tab completion - mcrealtime.use (default)
+## Compatibility strategy
 
-IMPORTANT:
+The universal build intentionally:
 
+- targets Java 8 bytecode;
+- compiles against Spigot API `1.8.8-R0.1-SNAPSHOT`;
+- does not use NMS;
+- does not use Paper-only API;
+- does not declare a modern `api-version` in `plugin.yml`.
 
+This maximizes compatibility across classic Bukkit/Spigot/Paper-style servers. It does **not** make the JAR a Fabric, Forge/NeoForge, BungeeCord, or Velocity plugin; those are different platforms. On proxy networks, install MCRealTime on the backend Bukkit-compatible servers whose worlds it should control.
 
-It works on JRE 8-25.
+## Upgrade notes from 4.x
 
+The rewrite understands the old `enable` key as a fallback for the new `enabled` key. Existing top-level `timezone`, `global`, and `worlds` settings remain conceptually compatible.
 
+The old embedded BukkitDev/Curse updater was deliberately removed from the runtime core. Update distribution should be handled separately from time synchronization.
 
-IT SUPPORTS THE VERSIONS (Bukkit/Craftbukkit/Spigot/PaperSpigot) 1.8 - latest !
+The following old informational commands were also not carried into the core rewrite: `contact`, `changelog`, `uninstall`, and `update`.
 
+Current commands:
 
+```text
+/mcrealtime status
+/mcrealtime reload
+```
 
-The only one complication is, that you can not execute the /time set <time> </time>command, and you can't sleep at night and in newer versions you can sleep, but without changes of time in minecraft !
+`/mcrealtime info` is accepted as an alias of `status`.
 
-Don't worry, the insomnia will be deactivated while the plugin is enabled.
+## Build and test
 
+Use a current JDK and Maven; the compiler is configured with `--release 8` so accidental use of post-Java-8 JDK APIs is rejected.
 
+```bash
+mvn clean verify
+```
 
-That's it, now you can fully enjoy the plugin.
+The resulting plugin JAR is placed in `target/`.
 
+## Test coverage currently included
 
+- classic clock mapping at midnight, sunrise, noon and sunset;
+- minute/second precision that catches the old integer-division bug;
+- Oldenburg solar times near the 2026 summer and winter solstices;
+- canonical solar-event-to-Minecraft-tick mapping;
+- seasonal day-length behavior;
+- polar day/night detection.
 
-_______________________________________________________________
+## Next development steps
 
-
-I wish you a lot of fun with my plugin!
-
-Here is the source code: https://github.com/AppleCrafting/MCRealTime
-
-
-
-Dear Greetings,
-
-
-
-Sapentiae
-
-
-
-©2018-2025 Sapentiae
-
-
-
-©2018-2025 Gabriel M.
+1. Run the Maven test suite with the real Spigot 1.8.8 API dependency.
+2. Load-test the JAR on representative server generations (for example 1.8.8, 1.12.2, 1.16.5, 1.20.x, 1.21.x/current).
+3. Add a compatibility test matrix and CI.
+4. Decide whether sleeping should remain prevented by default or be allowed while MCRealTime immediately corrects vanilla time skipping.
+5. Add a dedicated polar-day/polar-night mapping instead of CLOCK fallback.
+6. Add optional update *notification* as a separate service, without automatic runtime downloading.
