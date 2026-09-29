@@ -1,4 +1,4 @@
-# MCRealTime 5 configuration
+# MCRealTime 4.8 configuration
 #
 # CLOCK:
 # Maps the configured civil clock directly to the
@@ -17,7 +17,7 @@
 #
 # /mcrt location set <location>
 
-config-version: 5
+config-version: 2
 
 enabled: true
 

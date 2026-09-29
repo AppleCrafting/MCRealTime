@@ -1,6 +1,7 @@
 package ing.applecraft.mcrealtime;
 
 import ing.applecraft.mcrealtime.command.MCRealTimeCommand;
+import ing.applecraft.mcrealtime.config.ConfigMigrationService;
 import ing.applecraft.mcrealtime.config.PluginSettings;
 import ing.applecraft.mcrealtime.config.SettingsLoader;
 import ing.applecraft.mcrealtime.listener.SleepListener;
@@ -37,6 +38,26 @@ public final class MCRealTimePlugin extends JavaPlugin {
     public void onEnable() {
 
         saveDefaultConfig();
+
+        ConfigMigrationService migrationService =
+                new ConfigMigrationService(this);
+
+        try {
+            migrationService.migrateIfNeeded();
+        } catch (IOException exception) {
+
+            getLogger().log(
+                    Level.SEVERE,
+                    "Could not migrate the MCRealTime configuration.",
+                    exception
+            );
+
+            getServer()
+                    .getPluginManager()
+                    .disablePlugin(this);
+
+            return;
+        }
 
         /*
          * Load and index GeoNames exactly once.
