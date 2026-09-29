@@ -70,6 +70,7 @@ public final class MCRealTimeCommand implements CommandExecutor, TabCompleter {
         List<String> candidates = new ArrayList<>();
         if (sender.hasPermission(USE_PERMISSION)) {
             candidates.add("status");
+            candidates.add("info");
         }
         if (sender.hasPermission(ADMIN_PERMISSION)) {
             candidates.add("reload");
@@ -84,7 +85,7 @@ public final class MCRealTimeCommand implements CommandExecutor, TabCompleter {
     private void sendHelp(CommandSender sender, String label) {
         sender.sendMessage(prefix() + ChatColor.GOLD + "Commands:");
         if (sender.hasPermission(USE_PERMISSION)) {
-            sender.sendMessage(ChatColor.YELLOW + "/" + label + " status"
+            sender.sendMessage(ChatColor.YELLOW + "/" + label + " status/info"
                     + ChatColor.GRAY + " - show current synchronization state");
         }
         if (sender.hasPermission(ADMIN_PERMISSION)) {

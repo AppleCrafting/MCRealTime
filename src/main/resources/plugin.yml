@@ -9,7 +9,7 @@ website: https://github.com/AppleCrafting/MCRealTime
 commands:
   mcrealtime:
     description: Shows MCRealTime status and administration commands.
-    usage: /<command> [status|reload]
+    usage: /<command> [status|info|reload]
     aliases: [mcrt]
 
 permissions:
