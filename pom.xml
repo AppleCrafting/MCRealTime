@@ -45,9 +45,22 @@
 
     <build>
         <resources>
+            <!-- Text resources, e.g. plugin.yml -->
             <resource>
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
+                <excludes>
+                    <exclude>geonames/**</exclude>
+                </excludes>
+            </resource>
+
+            <!-- Binary GeoNames resources must never be filtered -->
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <includes>
+                    <include>geonames/**</include>
+                </includes>
             </resource>
         </resources>
         <plugins>

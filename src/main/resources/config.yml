@@ -1,36 +1,77 @@
 # MCRealTime 5 configuration
 #
-# CLOCK: maps the configured civil clock directly to the Minecraft 24,000-tick day.
-# SOLAR: maps local sunrise -> tick 0, solar noon -> 6000 and sunset -> 12000.
+# CLOCK:
+# Maps the configured civil clock directly to the
+# Minecraft 24,000-tick day.
 #
-# The timezone is still required in SOLAR mode to determine the local calendar date.
-# Sunrise/sunset themselves are calculated from latitude and longitude.
+# SOLAR:
+# Maps local sunrise -> tick 0,
+# solar noon -> tick 6000
+# and sunset -> tick 12000.
+#
+# The timezone is still required in SOLAR mode to
+# determine the local calendar date.
+#
+# Latitude and longitude can be configured automatically
+# using:
+#
+# /mcrt location set <location>
 
 config-version: 5
+
 enabled: true
+
 mode: CLOCK
 
 timezone: "UTC"
 
 solar:
-  # Example coordinates only. Change them before enabling SOLAR mode.
+
+  # These values are automatically changed when using:
+  #
+  # /mcrt location set <location>
+
   latitude: 0.0
   longitude: 0.0
 
+  # Human-readable metadata about the location selected
+  # from the bundled GeoNames database.
+  #
+  # The solar calculation itself does not depend on
+  # these metadata values.
+
+  place:
+    geoname-id: 0
+    name: ""
+    country-code: ""
+
 # If global is true, all loaded worlds are synchronized.
-# Otherwise, only the named worlds are affected.
+#
+# Otherwise only the worlds listed below are affected.
+
 global: true
+
 worlds:
   - world
 
 synchronization:
-  # 20 ticks = approximately one second on a healthy server.
+
+  # 20 ticks are approximately one second
+  # on a healthy Minecraft server.
+
   interval-ticks: 20
 
 behavior:
-  # Prevent vanilla sleeping from briefly skipping the night before MCRealTime corrects it.
+
+  # Prevent vanilla sleeping from briefly skipping
+  # the night before MCRealTime corrects it.
+
   prevent-sleep: true
 
-  # When available on the server version, disable the insomnia gamerule while
-  # MCRealTime controls a world. The previous value is restored afterwards.
+  # When available on the Minecraft server version,
+  # disable the insomnia gamerule while MCRealTime
+  # controls a world.
+  #
+  # The original gamerule value is restored afterwards.
+
   disable-insomnia: true
