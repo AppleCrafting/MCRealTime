@@ -6,7 +6,7 @@
 
     <groupId>ing.applecraft</groupId>
     <artifactId>mcrealtime</artifactId>
-    <version>4.8-SNAPSHOT</version>
+    <version>4.8</version>
     <packaging>jar</packaging>
 
     <name>MCRealTime</name>
