@@ -17,7 +17,7 @@
 #
 # /mcrt location set <location>
 
-config-version: 2
+config-version: 3
 
 enabled: true
 
@@ -75,3 +75,19 @@ behavior:
   # The original gamerule value is restored afterwards.
 
   disable-insomnia: true
+
+updater:
+
+  # Enables MCRealTime's GitHub release updater.
+  enabled: true
+
+  # Check GitHub for a newer release when
+  # the plugin starts.
+  check-on-start: true
+
+  # Automatically download a newer release into
+  # Bukkit's update directory.
+  #
+  # The update will only become active after
+  # the next server restart.
+  auto-download: false

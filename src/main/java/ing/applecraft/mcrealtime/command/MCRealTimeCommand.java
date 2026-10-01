@@ -7,6 +7,8 @@ import ing.applecraft.mcrealtime.config.PluginSettings;
 import ing.applecraft.mcrealtime.location.LocationSearchService;
 import ing.applecraft.mcrealtime.location.Place;
 import ing.applecraft.mcrealtime.time.TimeMode;
+import ing.applecraft.mcrealtime.update.AsyncUpdateManager;
+import ing.applecraft.mcrealtime.update.PluginFileNamePolicy;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -29,15 +31,9 @@ public final class MCRealTimeCommand
             "mcrealtime.admin";
 
     private final MCRealTimePlugin plugin;
-
-    private final LocationSearchService
-            locationSearchService;
-
-    private final PlaceCommandCodec
-            placeCommandCodec;
-
-    private final ConfigurationUpdateService
-            configurationUpdateService;
+    private final LocationSearchService locationSearchService;
+    private final PlaceCommandCodec placeCommandCodec;
+    private final ConfigurationUpdateService configurationUpdateService;
 
     public MCRealTimeCommand(
             MCRealTimePlugin plugin,
@@ -55,7 +51,8 @@ public final class MCRealTimeCommand
             );
         }
 
-        this.plugin = plugin;
+        this.plugin =
+                plugin;
 
         this.locationSearchService =
                 locationSearchService;
@@ -64,7 +61,9 @@ public final class MCRealTimeCommand
                 new PlaceCommandCodec();
 
         this.configurationUpdateService =
-                new ConfigurationUpdateService(plugin);
+                new ConfigurationUpdateService(
+                        plugin
+                );
     }
 
     @Override
@@ -75,6 +74,7 @@ public final class MCRealTimeCommand
             String[] args) {
 
         if (args.length == 0) {
+
             sendHelp(
                     sender,
                     label
@@ -94,6 +94,7 @@ public final class MCRealTimeCommand
                 || subcommand.equalsIgnoreCase("info")) {
 
             if (!sender.hasPermission(USE_PERMISSION)) {
+
                 sendNoPermission(sender);
                 return true;
             }
@@ -108,6 +109,7 @@ public final class MCRealTimeCommand
         if (subcommand.equalsIgnoreCase("reload")) {
 
             if (!sender.hasPermission(ADMIN_PERMISSION)) {
+
                 sendNoPermission(sender);
                 return true;
             }
@@ -140,6 +142,7 @@ public final class MCRealTimeCommand
         if (subcommand.equalsIgnoreCase("mode")) {
 
             if (!sender.hasPermission(ADMIN_PERMISSION)) {
+
                 sendNoPermission(sender);
                 return true;
             }
@@ -157,11 +160,30 @@ public final class MCRealTimeCommand
         if (subcommand.equalsIgnoreCase("location")) {
 
             if (!sender.hasPermission(ADMIN_PERMISSION)) {
+
                 sendNoPermission(sender);
                 return true;
             }
 
             return handleLocation(
+                    sender,
+                    label,
+                    args
+            );
+        }
+
+        /*
+         * /mcrt update
+         */
+        if (subcommand.equalsIgnoreCase("update")) {
+
+            if (!sender.hasPermission(ADMIN_PERMISSION)) {
+
+                sendNoPermission(sender);
+                return true;
+            }
+
+            return handleUpdate(
                     sender,
                     label,
                     args
@@ -187,9 +209,6 @@ public final class MCRealTimeCommand
             String label,
             String[] args) {
 
-        /*
-         * /mcrt mode get
-         */
         if (args.length == 2
                 && args[1].equalsIgnoreCase("get")) {
 
@@ -197,6 +216,7 @@ public final class MCRealTimeCommand
                     plugin.getRuntime();
 
             if (runtime == null) {
+
                 sender.sendMessage(
                         prefix()
                                 + ChatColor.RED
@@ -220,10 +240,6 @@ public final class MCRealTimeCommand
             return true;
         }
 
-        /*
-         * /mcrt mode set clock
-         * /mcrt mode set solar
-         */
         if (args.length == 3
                 && args[1].equalsIgnoreCase("set")) {
 
@@ -231,11 +247,14 @@ public final class MCRealTimeCommand
 
             if (args[2].equalsIgnoreCase("clock")) {
 
-                mode = TimeMode.CLOCK;
+                mode =
+                        TimeMode.CLOCK;
 
-            } else if (args[2].equalsIgnoreCase("solar")) {
+            } else if (args[2]
+                    .equalsIgnoreCase("solar")) {
 
-                mode = TimeMode.SOLAR;
+                mode =
+                        TimeMode.SOLAR;
 
             } else {
 
@@ -249,7 +268,8 @@ public final class MCRealTimeCommand
                 return true;
             }
 
-            if (configurationUpdateService.setMode(mode)) {
+            if (configurationUpdateService
+                    .setMode(mode)) {
 
                 sender.sendMessage(
                         prefix()
@@ -301,9 +321,6 @@ public final class MCRealTimeCommand
             String label,
             String[] args) {
 
-        /*
-         * /mcrt location get
-         */
         if (args.length == 2
                 && args[1].equalsIgnoreCase("get")) {
 
@@ -334,10 +351,6 @@ public final class MCRealTimeCommand
                             "solar.place.country-code"
                     );
 
-            /*
-             * Display human-readable metadata when
-             * the location was selected through GeoNames.
-             */
             if (configuredPlaceName != null
                     && !configuredPlaceName
                     .trim()
@@ -399,9 +412,6 @@ public final class MCRealTimeCommand
             return true;
         }
 
-        /*
-         * /mcrt location set <place>
-         */
         if (args.length == 3
                 && args[1].equalsIgnoreCase("set")) {
 
@@ -453,12 +463,6 @@ public final class MCRealTimeCommand
             Place selected =
                     place.get();
 
-            /*
-             * Save the configuration first.
-             *
-             * ConfigurationUpdateService also reloads
-             * the MCRealTime runtime.
-             */
             if (!configurationUpdateService
                     .setLocation(selected)) {
 
@@ -525,6 +529,122 @@ public final class MCRealTimeCommand
 
     /*
      * =========================================================
+     * UPDATE
+     * =========================================================
+     */
+
+    private boolean handleUpdate(
+            CommandSender sender,
+            String label,
+            String[] args) {
+
+        if (!plugin.getConfig().getBoolean(
+                "updater.enabled",
+                true
+        )) {
+
+            sender.sendMessage(
+                    prefix()
+                            + ChatColor.RED
+                            + "The updater is disabled "
+                            + "in config.yml."
+            );
+
+            return true;
+        }
+
+        AsyncUpdateManager updateManager =
+                plugin.getUpdateManager();
+
+        if (updateManager == null) {
+
+            sender.sendMessage(
+                    prefix()
+                            + ChatColor.RED
+                            + "The update service "
+                            + "is not available."
+            );
+
+            return true;
+        }
+
+        /*
+         * /mcrt update
+         */
+        if (args.length == 1) {
+
+            if (!updateManager
+                    .checkForUpdates(sender)) {
+
+                sender.sendMessage(
+                        prefix()
+                                + ChatColor.YELLOW
+                                + "An update operation is already "
+                                + "in progress."
+                );
+
+                return true;
+            }
+
+            sender.sendMessage(
+                    prefix()
+                            + ChatColor.GRAY
+                            + "Checking GitHub for updates..."
+            );
+
+            return true;
+        }
+
+        /*
+         * /mcrt update download
+         */
+        if (args.length == 2
+                && args[1].equalsIgnoreCase(
+                "download"
+        )) {
+
+            if (!updateManager
+                    .downloadLatestUpdate(sender)) {
+
+                sender.sendMessage(
+                        prefix()
+                                + ChatColor.YELLOW
+                                + "An update operation is already "
+                                + "in progress."
+                );
+
+                return true;
+            }
+
+            sender.sendMessage(
+                    prefix()
+                            + ChatColor.GRAY
+                            + "Checking for and downloading "
+                            + "the latest update..."
+            );
+
+            return true;
+        }
+
+        sender.sendMessage(
+                ChatColor.YELLOW
+                        + "/"
+                        + label
+                        + " update"
+        );
+
+        sender.sendMessage(
+                ChatColor.YELLOW
+                        + "/"
+                        + label
+                        + " update download"
+        );
+
+        return true;
+    }
+
+    /*
+     * =========================================================
      * TAB COMPLETION
      * =========================================================
      */
@@ -536,23 +656,23 @@ public final class MCRealTimeCommand
             String alias,
             String[] args) {
 
-        /*
-         * /mcrt <TAB>
-         */
         if (args.length == 1) {
 
             List<String> candidates =
                     new ArrayList<String>();
 
             if (sender.hasPermission(USE_PERMISSION)) {
+
                 candidates.add("status");
                 candidates.add("info");
             }
 
             if (sender.hasPermission(ADMIN_PERMISSION)) {
+
                 candidates.add("reload");
                 candidates.add("mode");
                 candidates.add("location");
+                candidates.add("update");
             }
 
             return complete(
@@ -561,20 +681,43 @@ public final class MCRealTimeCommand
             );
         }
 
-        /*
-         * No administrative tab completion
-         * without the admin permission.
-         */
         if (!sender.hasPermission(ADMIN_PERMISSION)) {
+
             return Collections.emptyList();
         }
 
         if (args[0].equalsIgnoreCase("mode")) {
-            return completeMode(args);
+
+            return completeMode(
+                    args
+            );
         }
 
         if (args[0].equalsIgnoreCase("location")) {
-            return completeLocation(args);
+
+            return completeLocation(
+                    args
+            );
+        }
+
+        if (args[0].equalsIgnoreCase("update")) {
+
+            if (args.length == 2) {
+
+                List<String> candidates =
+                        new ArrayList<String>();
+
+                candidates.add(
+                        "download"
+                );
+
+                return complete(
+                        args[1],
+                        candidates
+                );
+            }
+
+            return Collections.emptyList();
         }
 
         return Collections.emptyList();
@@ -583,9 +726,6 @@ public final class MCRealTimeCommand
     private List<String> completeMode(
             String[] args) {
 
-        /*
-         * /mcrt mode <TAB>
-         */
         if (args.length == 2) {
 
             List<String> candidates =
@@ -600,9 +740,6 @@ public final class MCRealTimeCommand
             );
         }
 
-        /*
-         * /mcrt mode set <TAB>
-         */
         if (args.length == 3
                 && args[1].equalsIgnoreCase("set")) {
 
@@ -624,9 +761,6 @@ public final class MCRealTimeCommand
     private List<String> completeLocation(
             String[] args) {
 
-        /*
-         * /mcrt location <TAB>
-         */
         if (args.length == 2) {
 
             List<String> candidates =
@@ -641,19 +775,21 @@ public final class MCRealTimeCommand
             );
         }
 
-        /*
-         * /mcrt location set <query><TAB>
-         */
         if (args.length == 3
                 && args[1].equalsIgnoreCase("set")) {
 
             String query =
                     args[2]
-                            .replace('_', ' ');
+                            .replace(
+                                    '_',
+                                    ' '
+                            );
 
             List<Place> places =
                     locationSearchService
-                            .suggestedPlaces(query);
+                            .suggestedPlaces(
+                                    query
+                            );
 
             List<String> suggestions =
                     new ArrayList<String>();
@@ -673,10 +809,6 @@ public final class MCRealTimeCommand
         return Collections.emptyList();
     }
 
-    /**
-     * Performs normal Bukkit partial-match completion
-     * for small static command lists.
-     */
     private List<String> complete(
             String current,
             List<String> candidates) {
@@ -771,6 +903,24 @@ public final class MCRealTimeCommand
                             + ChatColor.GRAY
                             + " - select a solar location"
             );
+
+            sender.sendMessage(
+                    ChatColor.YELLOW
+                            + "/"
+                            + label
+                            + " update"
+                            + ChatColor.GRAY
+                            + " - check GitHub for updates"
+            );
+
+            sender.sendMessage(
+                    ChatColor.YELLOW
+                            + "/"
+                            + label
+                            + " update download"
+                            + ChatColor.GRAY
+                            + " - download an available update"
+            );
         }
     }
 
@@ -826,12 +976,77 @@ public final class MCRealTimeCommand
                         .getId()
         );
 
-        if (settings.getMode()
-                == TimeMode.SOLAR) {
+        PluginFileNamePolicy fileNamePolicy =
+                new PluginFileNamePolicy();
+
+        String pluginFileName =
+                plugin.getPluginFileName();
+
+        if (!fileNamePolicy.isCanonicalFileName(
+                pluginFileName
+        )) {
 
             sender.sendMessage(
                     ChatColor.GRAY
-                            + "Location: "
+                            + "Plugin file: "
+                            + ChatColor.YELLOW
+                            + pluginFileName
+            );
+
+            sender.sendMessage(
+                    ChatColor.YELLOW
+                            + "Please rename the plugin JAR to "
+                            + ChatColor.GREEN
+                            + fileNamePolicy
+                            .getCanonicalFileName()
+                            + ChatColor.YELLOW
+                            + " while the server is stopped."
+            );
+        }
+
+        if (settings.getMode()
+                == TimeMode.SOLAR) {
+
+            String configuredPlaceName =
+                    plugin.getConfig().getString(
+                            "solar.place.name"
+                    );
+
+            String configuredCountryCode =
+                    plugin.getConfig().getString(
+                            "solar.place.country-code"
+                    );
+
+            if (configuredPlaceName != null
+                    && !configuredPlaceName
+                    .trim()
+                    .isEmpty()) {
+
+                String displayName =
+                        configuredPlaceName;
+
+                if (configuredCountryCode != null
+                        && !configuredCountryCode
+                        .trim()
+                        .isEmpty()) {
+
+                    displayName +=
+                            " ("
+                                    + configuredCountryCode
+                                    + ")";
+                }
+
+                sender.sendMessage(
+                        ChatColor.GRAY
+                                + "Location: "
+                                + ChatColor.WHITE
+                                + displayName
+                );
+            }
+
+            sender.sendMessage(
+                    ChatColor.GRAY
+                            + "Coordinates: "
                             + ChatColor.WHITE
                             + settings
                             .getSolarLocation()

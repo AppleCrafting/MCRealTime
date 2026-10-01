@@ -11,6 +11,8 @@ import ing.applecraft.mcrealtime.location.GeoNamesPlaceParser;
 import ing.applecraft.mcrealtime.location.GeoNamesPlaceRepository;
 import ing.applecraft.mcrealtime.location.LocationSearchService;
 import ing.applecraft.mcrealtime.location.Place;
+import ing.applecraft.mcrealtime.update.*;
+import ing.applecraft.mcrealtime.update.PluginFileNamePolicy;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -30,6 +32,8 @@ public final class MCRealTimePlugin extends JavaPlugin {
             new SettingsLoader();
 
     private PluginRuntime runtime;
+
+    private AsyncUpdateManager updateManager;
 
     private LocationSearchService
             locationSearchService;
@@ -58,6 +62,8 @@ public final class MCRealTimePlugin extends JavaPlugin {
 
             return;
         }
+
+        checkPluginFileName();
 
         /*
          * Load and index GeoNames exactly once.
@@ -118,6 +124,21 @@ public final class MCRealTimePlugin extends JavaPlugin {
             return;
         }
 
+        updateManager =
+                new AsyncUpdateManager(
+                        this,
+                        new UpdateService(
+                                new GitHubReleaseClient(),
+                                new UpdateChecker()
+                        ),
+                        new UpdateDownloader(
+                                new HttpDownloadTransport()
+                        ),
+                        new UpdaterSettingsLoader()
+                );
+
+        updateManager.checkOnStart();
+
         getLogger().info(
                 "MCRealTime "
                         + getDescription().getVersion()
@@ -145,7 +166,34 @@ public final class MCRealTimePlugin extends JavaPlugin {
     }
 
     public PluginRuntime getRuntime() {
+
         return runtime;
+    }
+
+    private void checkPluginFileName() {
+
+        PluginFileNamePolicy fileNamePolicy =
+                new PluginFileNamePolicy();
+
+        if (fileNamePolicy.isCanonical(
+                getFile()
+        )) {
+            return;
+        }
+
+        getLogger().warning(
+                "MCRealTime is installed as '"
+                        + getFile().getName()
+                        + "'. Please rename the plugin JAR to '"
+                        + fileNamePolicy.getCanonicalFileName()
+                        + "' while the server is stopped. "
+                        + "The updater will continue to work "
+                        + "with the current file name until then."
+        );
+    }
+
+    public AsyncUpdateManager getUpdateManager() {
+        return updateManager;
     }
 
     /**
@@ -368,6 +416,11 @@ public final class MCRealTimePlugin extends JavaPlugin {
                         new WorldUnloadListener(this),
                         this
                 );
+    }
+
+    public String getPluginFileName() {
+
+        return getFile().getName();
     }
 
     private void logRuntime(

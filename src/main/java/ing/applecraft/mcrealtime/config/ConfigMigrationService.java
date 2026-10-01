@@ -16,7 +16,7 @@ import java.util.Map;
 
 public final class ConfigMigrationService {
 
-    public static final int CURRENT_CONFIG_VERSION = 2;
+    public static final int CURRENT_CONFIG_VERSION = 3;
 
     /*
      * Configuration paths that still exist in the
@@ -43,7 +43,11 @@ public final class ConfigMigrationService {
                     "synchronization.interval-ticks",
 
                     "behavior.prevent-sleep",
-                    "behavior.disable-insomnia"
+                    "behavior.disable-insomnia",
+
+                    "updater.enabled",
+                    "updater.check-on-start",
+                    "updater.auto-download"
             );
 
     private final MCRealTimePlugin plugin;
