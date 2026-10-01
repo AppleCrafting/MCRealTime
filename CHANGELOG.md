@@ -1,6 +1,18 @@
 # Changelog
 
-## 4.8
+## [4.9] - 2026-10-01
+
+### Fixed
+- Fixed solar-event date association for locations near the
+  International Date Line.
+- Ensured that solar events are calculated for the selected
+  location's local calendar date.
+
+### Tests
+- Added solar-date regression tests for Berlin, Sydney,
+  Samoa, and Kiribati.
+
+## [4.8] - 2026-10-01
 
 MCRealTime 4.8 is a major rewrite of the plugin with a new architecture,
 location-based solar time, safer configuration handling, and a modern

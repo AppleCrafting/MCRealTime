@@ -3,6 +3,8 @@ package ing.applecraft.mcrealtime.astronomy;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 
 /**
  * Offline sunrise, solar-noon and sunset calculator based on the NOAA/Meeus
@@ -15,6 +17,47 @@ public final class SolarCalculator {
     private static final double MINUTES_PER_DAY = 1440.0;
 
     public SolarDay calculate(LocalDate date, GeoLocation location) {
+        return calculateForUtcDate(date, date, location);
+    }
+
+    public SolarDay calculate(
+            LocalDate date,
+            GeoLocation location,
+            ZoneId zoneId) {
+
+        if (zoneId == null) {
+            throw new IllegalArgumentException("zoneId must not be null");
+        }
+
+        LocalDate utcAnchorDate = date;
+
+        for (int attempt = 0; attempt < 3; attempt++) {
+            SolarDay result =
+                    calculateForUtcDate(date, utcAnchorDate, location);
+
+            LocalDate solarNoonLocalDate =
+                    result.getSolarNoon()
+                            .atZone(zoneId)
+                            .toLocalDate();
+
+            long dayDifference =
+                    ChronoUnit.DAYS.between(solarNoonLocalDate, date);
+
+            if (dayDifference == 0L) {
+                return result;
+            }
+
+            utcAnchorDate = utcAnchorDate.plusDays(dayDifference);
+        }
+
+        throw new IllegalStateException(
+                "Could not associate solar noon with the requested local date.");
+    }
+
+    private SolarDay calculateForUtcDate(
+            LocalDate date,
+            LocalDate utcAnchorDate,
+            GeoLocation location) {
         if (date == null) {
             throw new IllegalArgumentException("date must not be null");
         }
@@ -22,9 +65,10 @@ public final class SolarCalculator {
             throw new IllegalArgumentException("location must not be null");
         }
 
-        double julianDay = julianDayAtUtcMidnight(date);
+        double julianDay = julianDayAtUtcMidnight(utcAnchorDate);
         double solarNoonMinutes = calculateSolarNoonUtcMinutes(julianDay, location.getLongitude());
-        Instant solarNoon = instantFromUtcMinutes(date, solarNoonMinutes);
+        Instant solarNoon =
+                instantFromUtcMinutes(utcAnchorDate, solarNoonMinutes);
 
         double centuryAtNoon = julianCentury(julianDay + solarNoonMinutes / MINUTES_PER_DAY);
         double declinationAtNoon = sunDeclinationDegrees(centuryAtNoon);
@@ -47,8 +91,10 @@ public final class SolarCalculator {
         sunriseMinutes = refineEventUtcMinutes(julianDay, location, sunriseMinutes, true);
         sunsetMinutes = refineEventUtcMinutes(julianDay, location, sunsetMinutes, false);
 
-        Instant sunrise = instantFromUtcMinutes(date, sunriseMinutes);
-        Instant sunset = instantFromUtcMinutes(date, sunsetMinutes);
+        Instant sunrise =
+                instantFromUtcMinutes(utcAnchorDate, sunriseMinutes);
+        Instant sunset =
+                instantFromUtcMinutes(utcAnchorDate, sunsetMinutes);
 
         // Near the international date line, the values may naturally lie on an
         // adjacent UTC date. Instant ordering must still hold for one solar day.

@@ -82,7 +82,7 @@ public final class SolarTimeProvider implements TimeProvider {
         return interpolate(instant, today.getSunset(), tomorrow.getSunrise(), 12_000L, 24_000L);
     }
 
-    public SolarDay getSolarDay(LocalDate date) {
+    public synchronized SolarDay getSolarDay(LocalDate date) {
         return solarDay(date);
     }
 
@@ -91,7 +91,8 @@ public final class SolarTimeProvider implements TimeProvider {
         if (cached != null) {
             return cached;
         }
-        SolarDay calculated = calculator.calculate(date, location);
+        SolarDay calculated =
+                calculator.calculate(date, location, zoneId);
         cache.put(date, calculated);
         return calculated;
     }
