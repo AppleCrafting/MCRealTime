@@ -21,6 +21,10 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.logging.Level;
 
+
+import org.bstats.bukkit.Metrics;
+import org.bstats.charts.SimplePie;
+
 /**
  * Bukkit entry point.
  *
@@ -124,6 +128,8 @@ public final class MCRealTimePlugin extends JavaPlugin {
             return;
         }
 
+        initializeMetrics();
+
         updateManager =
                 new AsyncUpdateManager(
                         this,
@@ -144,6 +150,32 @@ public final class MCRealTimePlugin extends JavaPlugin {
                         + getDescription().getVersion()
                         + " enabled."
         );
+    }
+
+
+    private void initializeMetrics() {
+        Metrics metrics = new Metrics(this, 34978);
+
+        // Time synchronization mode
+        metrics.addCustomChart(new SimplePie("time_mode", () -> {
+            String mode = getConfig().getString("mode", "CLOCK");
+
+            if ("SOLAR".equalsIgnoreCase(mode)) {
+                return "SOLAR";
+            }
+
+            if ("CLOCK".equalsIgnoreCase(mode)) {
+                return "CLOCK";
+            }
+
+            return null;
+        }));
+
+        // Global vs. per-world synchronization
+        metrics.addCustomChart(new SimplePie("world_scope", () -> {
+            boolean global = getConfig().getBoolean("global", true);
+            return global ? "GLOBAL" : "PER_WORLD";
+        }));
     }
 
     @Override

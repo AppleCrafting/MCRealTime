@@ -6,7 +6,7 @@
 
     <groupId>ing.applecraft</groupId>
     <artifactId>mcrealtime</artifactId>
-    <version>4.9</version>
+    <version>4.9.1</version>
     <packaging>jar</packaging>
 
     <name>MCRealTime</name>
@@ -33,6 +33,13 @@
             <artifactId>bukkit</artifactId>
             <version>${bukkit.version}</version>
             <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+        <groupId>org.bstats</groupId>
+        <artifactId>bstats-bukkit</artifactId>
+        <version>3.2.1</version>
+        <scope>compile</scope>
     </dependency>
     
         <dependency>
@@ -76,6 +83,31 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.5.4</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.6.2</version>
+
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+
+                <configuration>
+                    <createDependencyReducedPom>false</createDependencyReducedPom>
+
+                    <relocations>
+                        <relocation>
+                            <pattern>org.bstats</pattern>
+                            <shadedPattern>ing.applecraft.mcrealtime.libs.bstats</shadedPattern>
+                        </relocation>
+                    </relocations>
+                </configuration>
             </plugin>
         </plugins>
     </build>
